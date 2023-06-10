@@ -34,9 +34,9 @@ async function connect() {
 
 connect();
 
-app.get('/restart', async (req, res) => {
+app.get('/run/restart', async (req, res) => {
   if (!authorized(req, res)) return;
-  exec('/opt/bitnami/ctlscript.sh restart mongodb', (error, stdout, stderr) => {
+  exec('sudo /opt/bitnami/ctlscript.sh restart mongodb', (error, stdout, stderr) => {
     if (error) {
       console.error(`Error restarting MongoDB: ${error}`);
       return res.status(500).json({ error: 'Error restarting MongoDB.' });
@@ -45,9 +45,9 @@ app.get('/restart', async (req, res) => {
   });
 });
 
-app.get('/logs', async (req, res) => {
+app.get('/run/logs', async (req, res) => {
   if (!authorized(req, res)) return;
-  exec('tail -n 100 /opt/bitnami/mongodb/logs/mongodb.log', (error, stdout, stderr) => {
+  exec('sudo tail -n 100 /opt/bitnami/mongodb/logs/mongodb.log', (error, stdout, stderr) => {
     if (error) {
       console.error(`Error getting MongoDB logs: ${error}`);
       return res.status(500).json({ error: 'Error getting MongoDB logs.' });
@@ -60,7 +60,7 @@ app.get('/', async (req, res) => {
   res.status(500).send('ok');
 })
 
-app.get('/ping', async (req, res) => {
+app.get('/run/ping', async (req, res) => {
   // Check DB
   try {
     const results = await mongoose.connection.db.admin().ping();
@@ -100,9 +100,9 @@ app.get('/ping', async (req, res) => {
   });
 });
 
-// http://dev4.nodriza.io:3000/db?token=xxxxx
+// http://dev4.nodriza.io:3000/run?token=xxxxx
 
-app.get('/db', async (req, res) => {
+app.get('/run/stats', async (req, res) => {
   if (!authorized(req, res)) return;
   try {
     const client = mongoose.connection.getClient();
