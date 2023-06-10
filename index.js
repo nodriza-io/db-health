@@ -34,6 +34,28 @@ async function connect() {
 
 connect();
 
+app.get('/restart', async (req, res) => {
+  if (!authorized(req, res)) return;
+  exec('/opt/bitnami/ctlscript.sh restart mongodb', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error restarting MongoDB: ${error}`);
+      return res.status(500).json({ error: 'Error restarting MongoDB.' });
+    }
+    return res.json({ message: 'MongoDB restarted successfully.' });
+  });
+});
+
+app.get('/logs', async (req, res) => {
+  if (!authorized(req, res)) return;
+  exec('tail -n 100 /opt/bitnami/mongodb/logs/mongodb.log', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error getting MongoDB logs: ${error}`);
+      return res.status(500).json({ error: 'Error getting MongoDB logs.' });
+    }
+    return res.send(`<pre>${stdout}</pre>`);
+  });
+});
+
 app.get('/', async (req, res) => {
   res.status(500).send('ok');
 })
