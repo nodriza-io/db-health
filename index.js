@@ -4,8 +4,8 @@ const { exec } = require('child_process');
 
 const app = express();
 const port = 3000;
-const user = process.env.MONGO_USER;
-const password = process.env.MONGO_PASSWORD;
+const user = process.env.MONGODB_USER;
+const password = process.env.MONGODB_USER;
 const auth = (user && password) ? `${user}:${password}@` : '';
 const uri = `mongodb://${auth}localhost:27017/admin?authSource=admin&retryWrites=true&w=majority`;
 const opt = {
