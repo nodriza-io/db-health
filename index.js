@@ -15,7 +15,7 @@ const opt = {
 
 function authorized(req, res) {
   const token = req.query.token;
-  if (token !== 'Shox009_') {
+  if (token !== process.env.MONGO_PASSWORD) {
     res.status(401).send('401 - Unauthorized');
     return false
   } else {
@@ -77,7 +77,7 @@ connect().then(() => {
     });
   });
   
-  // http://dev4.nodriza.io:3000/db?token=Shox009_
+  // http://dev4.nodriza.io:3000/db?token=xxxxx
 
   app.get('/db', async (req, res) => {
     if (!authorized(req, res)) return;
