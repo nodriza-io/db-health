@@ -32,90 +32,88 @@ async function connect() {
   }
 }
 
-connect().then(() => {
-  app.get('/', async (req, res) => {
-    res.status(500).send('ok');
-  })
+connect();
 
-  app.get('/ping', async (req, res) => {
-    // Check DB
-    try {
-      const results = await mongoose.connection.db.admin().ping();
-    } catch (error) {
-      console.error('Healthcheck failed', error);
-      return res.status(500).send(`DB Fail: ${JSON.stringify(error, null, 2)}`);
+app.get('/', async (req, res) => {
+  res.status(500).send('ok');
+})
+
+app.get('/ping', async (req, res) => {
+  // Check DB
+  try {
+    const results = await mongoose.connection.db.admin().ping();
+  } catch (error) {
+    console.error('Healthcheck failed', error);
+    return res.status(500).send(`DB Fail: ${JSON.stringify(error, null, 2)}`);
+  }
+  // Check HD
+  exec('df -h', (error, stdout, stderr) => {
+    if (error) {
+      console.error('Error executing disk space check:', error);
+      return res.status(500).send(JSON.stringify(error, null, 2));
     }
-    // Check HD
-    exec('df -h', (error, stdout, stderr) => {
-      if (error) {
-        console.error('Error executing disk space check:', error);
-        return res.status(500).send(JSON.stringify(error, null, 2));
-      }
-      const lines = stdout.trim().split('\n');
-      // Skip the header line
-      const dataLines = lines.slice(1);
-      
-      const disks = dataLines.map(line => {
-        const [filesystem, size, used, avail, usePercent, mounted] = line.split(/\s+/);
-        return { filesystem, size, used, avail, usePercent, mounted };
-      });
-  
-      const targetDisk = disks.find(disk => disk.filesystem === '/dev/nvme0n1p1');
-  
-      if (!targetDisk) {
-        return res.status(500).json({ error: 'Target disk /dev/nvme0n1p1 not found.' });
-      }
-  
-      // If disk space is less than 10%, send an error
-      if (parseInt(targetDisk.usePercent, 10) > 90) {
-        return res.status(500).json({ 
-          error: `HD is running out of space. ${targetDisk.filesystem} has ${targetDisk.size}, is using ${targetDisk.used} - (${targetDisk.usePercent})`
-        });
-      }
-      // res.status(200).json({ message: 'Disk space check passed.', disk: targetDisk });
-      res.status(200).send('pong');
+    const lines = stdout.trim().split('\n');
+    // Skip the header line
+    const dataLines = lines.slice(1);
+
+    const disks = dataLines.map(line => {
+      const [filesystem, size, used, avail, usePercent, mounted] = line.split(/\s+/);
+      return { filesystem, size, used, avail, usePercent, mounted };
     });
-  });
-  
-  // http://dev4.nodriza.io:3000/db?token=xxxxx
 
-  app.get('/db', async (req, res) => {
-    if (!authorized(req, res)) return;
-    try {
-      const client = mongoose.connection.getClient();
-      const adminDb = client.db('admin');
-  
-      // Get list of all databases
-      const dbs = await adminDb.admin().listDatabases();
-  
-      let report = { _dbs: dbs};
-  
-      for (let dbObject of dbs.databases) {
-        const db = client.db(dbObject.name);
-        report[dbObject.name] = {};
-  
-        // Get list of all collections in the database
-        const collections = await db.listCollections().toArray();
-  
-        for (let coll of collections) {
-          // Get stats for each collection
-          const collObj = db.collection(coll.name);
-          const stats = await collObj.stats();
-          report[dbObject.name][coll.name] = stats.count; // number of documents in the collection
-        }
-      }
-  
-      res.status(200).json(report);
-    } catch (error) {
-      console.error('Failed to generate report', error);
-      res.status(500).json({ status: 'fail' });
+    const targetDisk = disks.find(disk => disk.filesystem === '/dev/nvme0n1p1');
+
+    if (!targetDisk) {
+      return res.status(500).json({ error: 'Target disk /dev/nvme0n1p1 not found.' });
     }
-  });
 
-  app.listen(port, () => {
-    console.log(`Service listening at http://localhost:${port}`);
+    // If disk space is less than 10%, send an error
+    if (parseInt(targetDisk.usePercent, 10) > 90) {
+      return res.status(500).json({
+        error: `HD is running out of space. ${targetDisk.filesystem} has ${targetDisk.size}, is using ${targetDisk.used} - (${targetDisk.usePercent})`
+      });
+    }
+    // res.status(200).json({ message: 'Disk space check passed.', disk: targetDisk });
+    res.status(200).send('pong');
   });
-
-}).catch((err) => {
-  console.error('Failed to connect to MongoDB', err);
 });
+
+// http://dev4.nodriza.io:3000/db?token=xxxxx
+
+app.get('/db', async (req, res) => {
+  if (!authorized(req, res)) return;
+  try {
+    const client = mongoose.connection.getClient();
+    const adminDb = client.db('admin');
+
+    // Get list of all databases
+    const dbs = await adminDb.admin().listDatabases();
+
+    let report = { _dbs: dbs };
+
+    for (let dbObject of dbs.databases) {
+      const db = client.db(dbObject.name);
+      report[dbObject.name] = {};
+
+      // Get list of all collections in the database
+      const collections = await db.listCollections().toArray();
+
+      for (let coll of collections) {
+        // Get stats for each collection
+        const collObj = db.collection(coll.name);
+        const stats = await collObj.stats();
+        report[dbObject.name][coll.name] = stats.count; // number of documents in the collection
+      }
+    }
+
+    res.status(200).json(report);
+  } catch (error) {
+    console.error('Failed to generate report', error);
+    res.status(500).json({ status: 'fail' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Service listening at http://localhost:${port}`);
+});
+
