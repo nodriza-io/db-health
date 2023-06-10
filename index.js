@@ -15,6 +15,8 @@ const opt = {
 
 function authorized(req, res) {
   const token = req.query.token;
+  console.log('--------> process.env.MONGO_PASSWORD:', process.env.MONGO_PASSWORD)
+  console.log('--------> token:', token)
   if (token !== process.env.MONGO_PASSWORD) {
     res.status(401).send('401 - Unauthorized');
     return false
