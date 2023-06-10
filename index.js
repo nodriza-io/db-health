@@ -13,6 +13,8 @@ const opt = {
   useUnifiedTopology: true,
 };
 
+console.log('Auth:', auth);
+
 function authorized(req, res) {
   const token = req.query.token;
   console.log('--------> process.env.MONGO_PASSWORD:', process.env.MONGO_PASSWORD)
