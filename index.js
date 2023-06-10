@@ -23,12 +23,15 @@ function authorized(req, res) {
   }
 }
 
+let connected;
 async function connect() {
   try {
     const conn = await mongoose.connect(uri, opt);
+    connected = true;
     console.log('Connected to MongoDB'); // This line will be printed after successful connection
   } catch (err) {
-    throw new Error(err.message);
+    connected = false;
+    console.error(err.message);
   }
 }
 
@@ -61,6 +64,7 @@ app.get('/', async (req, res) => {
 })
 
 app.get('/run/ping', async (req, res) => {
+  if (!connected) connect();
   // Check DB
   try {
     const results = await mongoose.connection.db.admin().ping();
