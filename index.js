@@ -64,7 +64,7 @@ app.get('/', async (req, res) => {
 })
 
 app.get('/run/ping', async (req, res) => {
-  // if (!connected) await connect();
+  if (!connected) return res.status(500).send(`DB Fail: Cannot connect to DB`);
   // Check DB
   try {
     const results = await mongoose.connection.db.admin().ping();
