@@ -43,7 +43,7 @@ connect().then(() => {
       const results = await mongoose.connection.db.admin().ping();
     } catch (error) {
       console.error('Healthcheck failed', error);
-      return res.status(500).send(`${process.env.HOSTNAME} DB Fail: ${JSON.stringify(error, null, 2)}`);
+      return res.status(500).send(`DB Fail: ${JSON.stringify(error, null, 2)}`);
     }
     // Check HD
     exec('df -h', (error, stdout, stderr) => {
@@ -69,7 +69,7 @@ connect().then(() => {
       // If disk space is less than 10%, send an error
       if (parseInt(targetDisk.usePercent, 10) > 90) {
         return res.status(500).json({ 
-          error: `${process.env.HOSTNAME} HD is running out of space. ${targetDisk.filesystem} has ${targetDisk.size}, is using ${targetDisk.used}, and only has ${targetDisk.usePercent} left.`
+          error: `HD is running out of space. ${targetDisk.filesystem} has ${targetDisk.size}, is using ${targetDisk.used} - (${targetDisk.usePercent})`
         });
       }
       // res.status(200).json({ message: 'Disk space check passed.', disk: targetDisk });
@@ -77,7 +77,6 @@ connect().then(() => {
     });
   });
   
-
   // http://dev4.nodriza.io:3000/db?token=Shox009_
 
   app.get('/db', async (req, res) => {
@@ -114,8 +113,7 @@ connect().then(() => {
   });
 
   app.listen(port, () => {
-    const hostname = process.env.HOSTNAME ? `${process.env.HOSTNAME}-public.skemify.co` : 'localhost';
-    console.log(`Service listening at http://${hostname}:${port}`);
+    console.log(`Service listening at http://localhost:${port}`);
   });
 
 }).catch((err) => {
