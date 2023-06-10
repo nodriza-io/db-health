@@ -64,13 +64,13 @@ app.get('/', async (req, res) => {
 })
 
 app.get('/run/ping', async (req, res) => {
-  if (!connected) connect();
+  // if (!connected) await connect();
   // Check DB
   try {
     const results = await mongoose.connection.db.admin().ping();
   } catch (error) {
-    console.error('Healthcheck failed', error);
-    return res.status(500).send(`DB Fail: ${JSON.stringify(error, null, 2)}`);
+    console.error('Healthcheck failed', error.message);
+    return res.status(500).send(`DB Fail: ${JSON.stringify(error.message, null, 2)}`);
   }
   // Check HD
   exec('df -h', (error, stdout, stderr) => {
