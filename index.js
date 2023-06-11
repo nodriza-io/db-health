@@ -17,8 +17,6 @@ console.log('Auth:', auth);
 
 function authorized(req, res) {
   const token = req.query.token;
-  console.log('--------> process.env.MONGODB_PASSWORD:', process.env.MONGODB_PASSWORD)
-  console.log('--------> token:', token)
   if (token !== process.env.MONGODB_PASSWORD) {
     res.status(401).send('401 - Unauthorized');
     return false
